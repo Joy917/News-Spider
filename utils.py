@@ -205,6 +205,30 @@ def write_xlsx_apend(file_path, values):
         wb.save(file_path)  # 保存文件，注意以xlsx为文件扩展名
 
 
+def get_title_time_content(url, header=None):
+    """
+    简单解析 HTML 网页，获取新闻的文章标题、发布时间和内容
+    :param url:
+    :return:
+    """
+    title, publish_date, content = ""
+    try:
+        r = requests.get(url, headers=header)
+        if r.status_code != 200:
+            return
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+        # 获取标题、时间、内容
+        title = soup.h1.text + '\n'
+        publish_date = soup.time.text
+        p_list = soup.find_all('p')
+        content = ''
+        for p in p_list:
+            content += p.text + '\n'
+    finally:
+        return title, publish_date, content
+
+
 value_title = [["姓名", "性别", "年龄", "城市", "职业"], ]
 
 value1 = [["张三", "男", "19", "杭州", "研发工程师"],
