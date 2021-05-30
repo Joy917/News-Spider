@@ -5,6 +5,7 @@
 1. 支持界面操作
 2. 支持时间段过滤
 3. 支持多个关键词
+4. 标题和正文附带谷歌机翻
 
 #### 支持站点：
 华尔街日报 + 福克斯新闻 + CNN + BBC + Olympic World + Olympic Tokyo + 国会山报 + Political
