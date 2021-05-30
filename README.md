@@ -1,19 +1,39 @@
 # News-Spider
-爬取国外新闻网站，并存储至Excel中
+国外新闻网站爬虫，并存储至Excel中
 
-#### 特性
+---
+#### 一、主要特性
 1. 支持界面操作
 2. 支持时间段过滤
 3. 支持多个关键词
 4. 标题和正文附带谷歌机翻
+5. 多线程并发加速
 
-#### 支持站点：
-华尔街日报 + 福克斯新闻 + CNN + BBC + Olympic World + Olympic Tokyo + 国会山报 + Political
+#### 二、支持站点：
+华尔街日报：https://www.wsj.com/
+福克斯新闻：https://www.foxnews.com/
+CNN：https://edition.cnn.com/
+BBC：https://www.bbc.com/
+Olympic World：https://www.olympic.org/
+Olympic Tokyo：https://tokyo2020.org/en/
+国会山报：https://thehill.com/
+Politico：https://www.politico.com/
 
-#### 技术关键词：
-win10 + python 3.9 + requests + newpaper + selenium + pyside2
+#### 三、技术关键词：
+win10 + python 3.9 + requests + newpaper + selenium + pyside2 + beautifulsoup4 + jsonpath
 
-#### 注意事项：梯子自备
+#### 四、注意事项：梯子自备
+
+#### 效果图：
+![img.png](img.png)
 
 ---
-持续更新中，如果觉得对你有帮助，请顺手点个 Star 鼓励下，感谢支持！
+###持续更新中，若有问题欢迎 Issue 反馈，如果觉得对你有帮助，请顺手点个 Star 鼓励下让更多人看到，感谢支持！
+
+## Q&A：
+1. 关键包版本：
+requests 2.25.1 + urllib3 1.25.8 + selenium 3.141.0 + chromedriver.exe 90.0.4430 + beautifulsoup4 4.9.3 + openpyxl 3.0.7 + PySide2 5.15.2 + newspaper3k 0.2.8 + jsonpath 0.82
+   
+2. Chrome 浏览器驱动下载地址：
+http://npm.taobao.org/mirrors/chromedriver/
+
