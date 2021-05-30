@@ -1,8 +1,18 @@
 # News-Spider
-爬取国外新闻网站，并存储至Excel中，
+爬取国外新闻网站，并存储至Excel中
 
-支持可视化操作，支持多个关键词，支持时间段过滤，注意事项：梯子自备
+#### 特性
+1. 支持界面操作
+2. 支持时间段过滤
+3. 支持多个关键词
 
-现已支持站点有：wsj、foxnews、cnn、bbc
+#### 支持站点：
+华尔街日报 + 福克斯新闻 + CNN + BBC + Olympic World + Olympic Tokyo + 国会山报 + Political
 
-持续更新中，如果对你有帮助，希望顺手点个Star，感谢支持！
+#### 技术关键词：
+win10 + python 3.9 + requests + newpaper + selenium + pyside2
+
+#### 注意事项：梯子自备
+
+---
+持续更新中，如果觉得对你有帮助，请顺手点个 Star 鼓励下，感谢支持！
