@@ -3,6 +3,7 @@ import sys
 import os
 from PySide2 import QtWidgets
 from PySide2.QtWidgets import QMainWindow
+import PySide2
 
 from ui.MainWindow import Ui_MainWindow
 from spiders import bbc_spider
@@ -29,14 +30,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         end_date = self.end_date.text().replace("/", "")
         keywords = re.split(r"\s+", self.lineEdit.text().strip())
         target_sites = []
-        if self.checkBox_wsj.isChecked(): target_sites.append("wsj")
-        if self.checkBox_cnn.isChecked(): target_sites.append("cnn")
-        if self.checkBox_bbc.isChecked(): target_sites.append("bbc")
-        if self.checkBox_foxnews.isChecked(): target_sites.append("foxnews")
-        if self.checkBox_olympics_tokyo.isChecked(): target_sites.append("olympics_tokyo")
-        if self.checkBox_olympics_world.isChecked(): target_sites.append("olympics_world")
-        if self.checkBox_politico.isChecked(): target_sites.append("politico")
-        if self.checkBox_thehill.isChecked(): target_sites.append("thehill")
+        if self.checkBox_wsj.isChecked(): target_sites.append("WSJ")
+        if self.checkBox_cnn.isChecked(): target_sites.append("CNN")
+        if self.checkBox_bbc.isChecked(): target_sites.append("BBC")
+        if self.checkBox_foxnews.isChecked(): target_sites.append("FoxNews")
+        if self.checkBox_olympics_tokyo.isChecked(): target_sites.append("Olympics_Tokyo")
+        if self.checkBox_olympics_world.isChecked(): target_sites.append("Olympics_World")
+        if self.checkBox_politico.isChecked(): target_sites.append("Politico")
+        if self.checkBox_thehill.isChecked(): target_sites.append("TheHill")
 
         # 无效参数
         if len(keywords) == 0 or int(start_date) > int(end_date) or len(target_sites) <= 0:
@@ -49,36 +50,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             os.makedirs(dir_name)
         # 开始爬取
         print("spiders are running, please wait...")
-        self.label_info.setText("spiders are running, please wait...")
         # 批量启动并阻塞线程
         try:
             threading_pool = []
             for id, site in enumerate(target_sites, start=1):
-                if site == "wsj":
+                if site == "WSJ":
                     threading_pool.append(wsj_spider.Task(id, site, dir_name, keywords, start_date, end_date))
-                if site == "cnn":
+                if site == "CNN":
                     threading_pool.append(cnn_spider.Task(id, site, dir_name, keywords, start_date, end_date))
-                if site == "bbc":
+                if site == "BBC":
                     threading_pool.append(bbc_spider.Task(id, site, dir_name, keywords, start_date, end_date))
-                if site == "foxnews":
+                if site == "FoxNews":
                     threading_pool.append(foxnews_spider.Task(id, site, dir_name, keywords, start_date, end_date))
-                if site == "olympics_tokyo":
-                    threading_pool.append(olympics_tokyo_spider.Task(id, site, dir_name, keywords, start_date, end_date))
-                if site == "olympics_world":
-                    threading_pool.append(olympics_world_spider.Task(id, site, dir_name, keywords, start_date, end_date))
-                if site == "politico":
+                if site == "Olympics_Tokyo":
+                    threading_pool.append(
+                        olympics_tokyo_spider.Task(id, site, dir_name, keywords, start_date, end_date))
+                if site == "Olympics_World":
+                    threading_pool.append(
+                        olympics_world_spider.Task(id, site, dir_name, keywords, start_date, end_date))
+                if site == "Politico":
                     threading_pool.append(politico_spider.Task(id, site, dir_name, keywords, start_date, end_date))
-                if site == "thehill":
+                if site == "TheHill":
                     threading_pool.append(thehill_spider.Task(id, site, dir_name, keywords, start_date, end_date))
 
             for th in threading_pool:
                 th.start()
             for th in threading_pool:
                 th.join()
-        except Exception as exc:
-            print(f"Happened an error ! please check")
-        finally:
-            self.label_info.setText("please check the result in D:\\spiderResult")
+        except:
+            pass
 
 
 if __name__ == '__main__':

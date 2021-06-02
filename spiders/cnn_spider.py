@@ -6,6 +6,8 @@ import threading
 import utils
 import entity
 
+TOTALS = 0
+
 
 def get_header():
     header = {
@@ -22,7 +24,7 @@ def get_header():
     return header
 
 
-def start_crawl(keywords, start_time, end_time):
+def start_crawl(file_path, keywords, start_time, end_time):
     keywords_str = "%20".join(keywords)
     item_set = set()
 
@@ -55,17 +57,12 @@ def start_crawl(keywords, start_time, end_time):
                 if date < int(start_time):
                     return item_set
         except Exception as exc:
-            # logging.exception(exc)
             continue
-
-    return item_set
-
-
-def save_to_excel(file_path, keywords, item_set):
-    # 创建空Excel并写入表头
-    utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(keywords))
-    # 写入数据
-    utils.write_xlsx_apend(file_path, item_set)
+        finally:
+            global TOTALS
+            TOTALS += len(item_set)
+            utils.write_xlsx_apend(file_path, item_set)
+            item_set.clear()
 
 
 class Task(threading.Thread):
@@ -82,15 +79,17 @@ class Task(threading.Thread):
         print(f"{self.name} start...")
         start = time.time()
         file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
-        item_set = start_crawl(self.keywords, self.start_time, self.end_time)
-        save_to_excel(file_path, self.keywords, item_set)
+        # 创建空Excel并写入表头
+        utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+        start_crawl(file_path, self.keywords, self.start_time, self.end_time)
         end = time.time()
-        print(f"{self.name} end, totals:{len(item_set)}, used:{round((end - start) / 60, 2)} min")
+        print(f"{self.name} end, totals:{TOTALS}, used:{round((end - start) / 60, 2)} min")
 
 
 if __name__ == '__main__':
-    keywords = ["tokyo", "china"]
-    start_time = 20210101
-    end_time = 20210305
-    item_set = start_crawl(keywords=keywords, start_time=start_time, end_time=end_time)
-    print(f"total crawl number:{len(item_set)}")
+    keywords = ["China", "Threat"]
+    start_time = "20210525"
+    end_time = "20210530"
+    # 创建空Excel并写入表头
+    utils.create_xlsx_with_head("./CNN.xlsx", sheet_name='+'.join(keywords))
+    start_crawl("./CNN.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)
