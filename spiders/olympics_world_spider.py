@@ -8,6 +8,8 @@ from selenium import webdriver
 import entity
 import utils
 
+TOTALS = 0
+
 
 def get_header():
     header = {
@@ -24,7 +26,7 @@ def get_header():
     return header
 
 
-def start_crawl(keywords, start_time, end_time):
+def start_crawl(file_path, keywords, start_time, end_time):
     keywords_str = "+".join(keywords)
 
     item_set = set()
@@ -37,7 +39,7 @@ def start_crawl(keywords, start_time, end_time):
         options.add_argument('--headless')
         # 关闭图片视频加载
         options.add_argument('blink-settings=imagesEnabled=false')
-        driver = webdriver.Chrome(r'D:\projects\Spider\chromedriver.exe', options=options)
+        driver = webdriver.Chrome(r'../chromedriver.exe', options=options)
         driver.get(url)
 
         # driver.find_element_by_id("onetrust-accept-btn-handler").click()
@@ -67,6 +69,9 @@ def start_crawl(keywords, start_time, end_time):
                 # 判断时间
                 if int(start_time) <= int(date) <= int(end_time):
                     article.text = art.text
+                    if art.text.strip() == "":
+                        title, publish_date, content = utils.get_title_time_content(article.url, header=get_header())
+                        article.text = content
                     article.text_cn = utils.translate_with_webdriver(article.text)
                     article.date = date
                 else:
@@ -76,14 +81,13 @@ def start_crawl(keywords, start_time, end_time):
             time.sleep(1)
             item_set.add(article)
 
-    return item_set
-
-
-def save_to_excel(file_path, keywords, item_set):
-    # 创建空Excel并写入表头
-    utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(keywords))
-    # 写入数据
-    utils.write_xlsx_apend(file_path, item_set)
+    try:
+        global TOTALS
+        TOTALS += len(item_set)
+        utils.write_xlsx_apend(file_path, item_set)
+        item_set.clear()
+    except Exception as exc:
+        pass
 
 
 class Task(threading.Thread):
@@ -100,15 +104,17 @@ class Task(threading.Thread):
         print(f"{self.name} start...")
         start = time.time()
         file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
-        item_set = start_crawl(self.keywords, self.start_time, self.end_time)
-        save_to_excel(file_path, self.keywords, item_set)
+        # 创建空Excel并写入表头
+        utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+        start_crawl(file_path, self.keywords, self.start_time, self.end_time)
         end = time.time()
-        print(f"{self.name} end, totals:{len(item_set)}, used:{round((end - start) / 60, 2)} min")
+        print(f"{self.name} end, totals:{TOTALS}, used:{round((end - start) / 60, 2)} min")
 
 
 if __name__ == '__main__':
-    keywords = ["tokyo", "china"]
-    start_time = "20210501"
-    end_time = "20210517"
-    item_set = start_crawl(keywords=keywords, start_time=start_time, end_time=end_time)
-    print(f"total crawl number:{len(item_set)}")
+    keywords = ["China", "Threat"]
+    start_time = "20210525"
+    end_time = "20210530"
+    # 创建空Excel并写入表头
+    utils.create_xlsx_with_head("./World.xlsx", sheet_name='+'.join(keywords))
+    start_crawl("./World.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)

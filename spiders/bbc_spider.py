@@ -10,6 +10,8 @@ import threading
 import entity
 import utils
 
+TOTALS = 0
+
 
 def get_header():
     header = {
@@ -25,7 +27,7 @@ def get_header():
     return header
 
 
-def start_crawl(keywords, start_time, end_time):
+def start_crawl(file_path, keywords, start_time, end_time):
     keywords_str = "+".join(keywords)
     item_set = set()
 
@@ -40,8 +42,11 @@ def start_crawl(keywords, start_time, end_time):
         initial_results = jsonpath.jsonpath(data, "$..initialResults")[0]
         totals = initial_results["count"]
 
-        try:
-            for page in range(1, totals // 10):
+        for page in range(1, totals // 10):
+            # 结果太多，限制条数
+            if page == 10:
+                break
+            try:
                 time.sleep(1)
                 url = f"https://www.bbc.co.uk/search?q={keywords_str}&page={page}"
                 r = requests.get(url=url, headers=get_header())
@@ -54,6 +59,7 @@ def start_crawl(keywords, start_time, end_time):
                     initial_results = jsonpath.jsonpath(data, "$..initialResults")[0]
                     for item in initial_results["items"]:
                         # 17 April 2017
+                        # 8 hours ago
                         origin_date = utils.format_date(item["metadataStripItems"][0]["text"])
 
                         if origin_date != -1 and int(start_time) <= origin_date <= int(end_time):
@@ -68,23 +74,25 @@ def start_crawl(keywords, start_time, end_time):
                                 art.download()
                                 art.parse()
                                 article.text = art.text
+                                if art.text.strip() == "":
+                                    title, publish_date, content = utils.get_title_time_content(item["url"],
+                                                                                                header=get_header())
+                                    article.text = content
                                 article.text_cn = utils.translate_with_webdriver(article.text)
                             except Exception as exc:
-                                # logging.exception(exc)
                                 continue
 
                             item_set.add(article)
-        except:
-            return item_set
-
-    return item_set
-
-
-def save_to_excel(file_path, keywords, item_set):
-    # 创建空Excel并写入表头
-    utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(keywords))
-    # 写入数据
-    utils.write_xlsx_apend(file_path, item_set)
+            except Exception as exc:
+                continue
+            finally:
+                try:
+                    global TOTALS
+                    TOTALS += len(item_set)
+                    utils.write_xlsx_apend(file_path, item_set)
+                    item_set.clear()
+                except:
+                    pass
 
 
 class Task(threading.Thread):
@@ -101,15 +109,17 @@ class Task(threading.Thread):
         print(f"{self.name} start...")
         start = time.time()
         file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
-        item_set = start_crawl(self.keywords, self.start_time, self.end_time)
-        save_to_excel(file_path, self.keywords, item_set)
+        # 创建空Excel并写入表头
+        utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+        start_crawl(file_path, self.keywords, self.start_time, self.end_time)
         end = time.time()
-        print(f"{self.name} end, totals:{len(item_set)}, used:{round((end - start) / 60, 2)} min")
+        print(f"{self.name} end, totals:{TOTALS}, used:{round((end - start) / 60, 2)} min")
 
 
 if __name__ == '__main__':
-    keywords = ["tokyo", "china"]
-    start_time = "20210301"
-    end_time = "20210312"
-    item_set = start_crawl(keywords=keywords, start_time=start_time, end_time=end_time)
-    print(f"total crawl number:{len(item_set)}")
+    keywords = ["China", "Threat"]
+    start_time = "20210601"
+    end_time = "20210603"
+    # 创建空Excel并写入表头
+    utils.create_xlsx_with_head("./BBC.xlsx", sheet_name='+'.join(keywords))
+    start_crawl("./BBC.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)
