@@ -5,8 +5,7 @@ import newspaper as ns
 import time
 from selenium import webdriver
 
-import entity
-import utils
+from src import entity, utils
 
 TOTALS = 0
 
@@ -39,7 +38,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
         options.add_argument('--headless')
         # 关闭图片视频加载
         options.add_argument('blink-settings=imagesEnabled=false')
-        driver = webdriver.Chrome(r'../chromedriver.exe', options=options)
+        driver = webdriver.Chrome(utils.DRIVER_PATH, options=options)
         driver.get(url)
 
         # driver.find_element_by_id("onetrust-accept-btn-handler").click()

@@ -7,8 +7,7 @@ import json
 import jsonpath
 import threading
 
-import entity
-import utils
+from src import entity, utils
 
 TOTALS = 0
 

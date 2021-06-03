@@ -10,14 +10,14 @@
 5. 多线程并发加速
 
 #### 二、支持站点：
-华尔街日报：https://www.wsj.com/
-福克斯新闻：https://www.foxnews.com/
-CNN：https://edition.cnn.com/
-BBC：https://www.bbc.com/
-Olympic World：https://www.olympic.org/
-Olympic Tokyo：https://tokyo2020.org/en/
-国会山报：https://thehill.com/
-Politico：https://www.politico.com/
+1. 华尔街日报：https://www.wsj.com/
+2. 福克斯新闻：https://www.foxnews.com/
+3. CNN：https://edition.cnn.com/
+4. BBC：https://www.bbc.com/
+5. Olympic World：https://www.olympic.org/
+6. Olympic Tokyo：https://tokyo2020.org/en/
+7. 国会山报：https://thehill.com/
+8. Politico：https://www.politico.com/
 
 #### 三、技术关键词：
 win10 + python 3.9 + requests + newpaper + selenium + pyside2 + beautifulsoup4 + jsonpath
@@ -25,10 +25,10 @@ win10 + python 3.9 + requests + newpaper + selenium + pyside2 + beautifulsoup4 +
 #### 四、注意事项：梯子自备
 
 #### 效果图：
-![img.png](img.png)
-
+![display.png](example/display.png)
+![result.png](example/result.png)
 ---
-###持续更新中，若有问题欢迎 Issue 反馈，如果觉得对你有帮助，请顺手点个 Star 鼓励下让更多人看到，感谢支持！
+### 持续更新中，若有问题欢迎 Issue 反馈，如果觉得对你有帮助，请顺手点个 Star 鼓励下让更多人看到，感谢支持！
 
 ## Q&A：
 1. 关键包版本：
