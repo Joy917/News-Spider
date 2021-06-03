@@ -4,8 +4,7 @@ import json
 import time
 import newspaper as ns
 
-import entity
-import utils
+from src import entity, utils
 
 TOTALS = 0
 

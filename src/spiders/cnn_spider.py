@@ -3,8 +3,7 @@ import json
 import time
 import threading
 
-import utils
-import entity
+from src import entity, utils
 
 TOTALS = 0
 
