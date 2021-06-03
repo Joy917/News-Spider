@@ -43,6 +43,9 @@ def start_crawl(file_path, keywords, start_time, end_time):
         totals = initial_results["count"]
 
         for page in range(1, totals // 10):
+            # 结果太多，限制条数
+            if page == 10:
+                break
             try:
                 time.sleep(1)
                 url = f"https://www.bbc.co.uk/search?q={keywords_str}&page={page}"
@@ -56,6 +59,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
                     initial_results = jsonpath.jsonpath(data, "$..initialResults")[0]
                     for item in initial_results["items"]:
                         # 17 April 2017
+                        # 8 hours ago
                         origin_date = utils.format_date(item["metadataStripItems"][0]["text"])
 
                         if origin_date != -1 and int(start_time) <= origin_date <= int(end_time):
@@ -114,8 +118,8 @@ class Task(threading.Thread):
 
 if __name__ == '__main__':
     keywords = ["China", "Threat"]
-    start_time = "20210525"
-    end_time = "20210530"
+    start_time = "20210601"
+    end_time = "20210603"
     # 创建空Excel并写入表头
     utils.create_xlsx_with_head("./BBC.xlsx", sheet_name='+'.join(keywords))
     start_crawl("./BBC.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)

@@ -56,6 +56,8 @@ def start_crawl(file_path, keywords, start_time, end_time):
         except Exception as exc:
             continue
 
+    global TOTALS
+    TOTALS += len(item_set)
     # 解析链接对应正文
     for item in item_set:
         try:
@@ -72,10 +74,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
         except Exception as exc:
             continue
         finally:
-            global TOTALS
-            TOTALS += len(item_set)
-            utils.write_xlsx_apend(file_path, item_set)
-            item_set.clear()
+            utils.write_xlsx_apend(file_path, [item, ])
 
 
 class Task(threading.Thread):
