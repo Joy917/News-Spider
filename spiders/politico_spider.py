@@ -26,7 +26,7 @@ def get_header():
     return header
 
 
-def driver_url(url):
+def get_driver_with_login():
     # 模拟浏览器登录
     options = webdriver.ChromeOptions()
     # 关闭可视化
@@ -34,12 +34,15 @@ def driver_url(url):
     # 关闭图片视频加载
     options.add_argument('blink-settings=imagesEnabled=false')
     driver = webdriver.Chrome(utils.DRIVER_PATH, options=options)
-    driver.get(url)
 
+    return driver
+
+
+def driver_url(driver, url):
+    driver.get(url)
     result = driver.find_element_by_xpath(
         "//body/div[@id='globalWrapper']/main[@id='main']/div[2]/div[1]/div[1]/section[1]/div[3]")
     soup = BeautifulSoup(result.get_attribute('innerHTML'), "html.parser")
-    driver.quit()
     return soup
 
 
@@ -48,12 +51,13 @@ def start_crawl(file_path, keywords, start_time, end_time):
     start_date = start_time[4: 6] + "%2F" + start_time[6: 8] + "%2F" + start_time[0: 4]
     end_date = end_time[4: 6] + "%2F" + end_time[6: 8] + "%2F" + end_time[0: 4]
 
+    driver = get_driver_with_login()
     item_set = set()
     for page in range(1, 11):
         url = f"https://www.politico.com/search/{page}?adv=true&userInitiated=true&s=newest&q={keywords_str}&start={start_date}&end={end_date}"
 
         try:
-            soup = driver_url(url)
+            soup = driver_url(driver, url)
 
             search_result = soup.find_all("article", class_=re.compile("story-frag"))
             if search_result and len(search_result) > 0:
@@ -91,6 +95,8 @@ def start_crawl(file_path, keywords, start_time, end_time):
             item_set.clear()
         except:
             pass
+
+    driver.quit()
 
 
 def save_to_excel(file_path, keywords, item_set):

@@ -24,7 +24,7 @@ def get_header():
     return header
 
 
-def driver_url(url):
+def get_driver_with_login():
     # 模拟浏览器登录
     options = webdriver.ChromeOptions()
     # 关闭可视化
@@ -32,6 +32,11 @@ def driver_url(url):
     # 关闭图片视频加载
     options.add_argument('blink-settings=imagesEnabled=false')
     driver = webdriver.Chrome(utils.DRIVER_PATH, options=options)
+
+    return driver
+
+
+def driver_url(driver, url):
     driver.get(url)
 
     result = driver.find_element_by_xpath("//body/div[@id='page']/div[@id='main']/div[@id='content']/ol[1]")
@@ -43,12 +48,13 @@ def driver_url(url):
 def start_crawl(file_path, keywords, start_time, end_time):
     keywords_str = "%20".join(keywords)
 
+    driver = get_driver_with_login()
     item_set = set()
     for page in range(0, 10):
         url = f"https://thehill.com/search/query/{keywords_str}?page={page}"
 
         try:
-            soup = driver_url(url)
+            soup = driver_url(driver, url)
 
             search_result = soup.find_all("li", class_=re.compile("search-result"))
             if search_result and len(search_result) > 0:

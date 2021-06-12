@@ -158,7 +158,7 @@ def get_title_time_content(url, header=None):
 
         soup = BeautifulSoup(r.text, 'html.parser')
         # 获取标题、时间、内容
-        title = soup.h1.text + '\n'
+        title = soup.h1.text
         p_list = soup.find_all('p')
         content = ''
         for p in p_list:
