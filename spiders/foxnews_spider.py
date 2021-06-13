@@ -2,7 +2,6 @@ import threading
 import requests
 import json
 import time
-import newspaper as ns
 
 import utils
 import entity
