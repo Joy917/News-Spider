@@ -1,11 +1,8 @@
 import threading
 
-from PySide2.QtCore import QThread
 from bs4 import BeautifulSoup
 import re
-import newspaper as ns
 import time
-from selenium import webdriver
 
 import utils
 import entity

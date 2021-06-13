@@ -2,7 +2,6 @@ import requests
 import re
 
 from bs4 import BeautifulSoup
-import newspaper as ns
 import time
 import json
 import jsonpath

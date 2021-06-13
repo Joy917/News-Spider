@@ -89,7 +89,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
             driver.get(item.url)
             element = driver.find_element_by_id("main")
             soup = BeautifulSoup(element.get_attribute('innerHTML'), "html.parser")
-            title = soup.h1.text
+            title = soup.h1.text.replace("\n", "")
             p_list = soup.find_all('p')
             content = ''
             for p in p_list:
