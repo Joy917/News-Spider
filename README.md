@@ -30,6 +30,7 @@ win10 + python 3.9 + requests + newpaper + selenium + pyside2 + beautifulsoup4 +
 ---
 ### 持续更新中，若有问题欢迎 Issue 反馈，如果觉得对你有帮助，请顺手点个 Star 鼓励下让更多人看到，感谢支持！
 
+---
 ## Q&A：
 1. 关键包版本：
 requests 2.25.1 + urllib3 1.25.8 + selenium 3.141.0 + chromedriver.exe 90.0.4430 + beautifulsoup4 4.9.3 + openpyxl 3.0.7 + PySide2 5.15.2 + newspaper3k 0.2.8 + jsonpath 0.82
