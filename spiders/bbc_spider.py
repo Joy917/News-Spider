@@ -1,0 +1,128 @@
+import requests
+import re
+
+from bs4 import BeautifulSoup
+import newspaper as ns
+import time
+import json
+import jsonpath
+import threading
+
+import utils
+import entity
+
+TOTALS = 0
+
+
+def get_header():
+    header = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36",
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "zh-CN,zh;q=0.9",
+        "cache-control": "max-age=0",
+        "upgrade-insecure-requests": "1",
+        "Connection": "close",
+        "cookie": '_cb_ls=1; _cb=CzO6DqKp_6bBXBaTU; ckns_explicit=0; ckns_policy=111; ckns_policy_exp=1652201145357; BBC-UID=8680d9e906b3967fc6e71e58918b9787999571467030e580e5b63846f9808b2f0Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36; _chartbeat2=.1620577822052.1621349966926.100000011.B33yPjYq-pEDm0OlpC7i1RQDBEvQi.1; _cb_svref=https://www.bbc.com/; atuserid={"name":"atuserid","val":"79e79765-f39c-4281-9011-a714843f1077","options":{"end":"2022-06-19T14:59:26.958Z","path":"/"}}'
+    }
+    return header
+
+
+def start_crawl(file_path, keywords, start_time, end_time):
+    keywords_str = "+".join(keywords)
+    item_set = set()
+
+    url = f"https://www.bbc.co.uk/search?q={keywords_str}&page=1"
+    r = requests.get(url=url, headers=get_header())
+
+    html_content = r.text
+    soup = BeautifulSoup(html_content, "html.parser")
+    match = re.search(">window.__INITIAL_DATA__=(.+);</script>", str(soup.find_all("script")[3]))
+    if match:
+        data = json.loads(match[1])
+        initial_results = jsonpath.jsonpath(data, "$..initialResults")[0]
+        totals = initial_results["count"]
+
+        for page in range(1, totals // 10):
+            # 结果太多，限制条数
+            if page == 10:
+                break
+            try:
+                time.sleep(1)
+                url = f"https://www.bbc.co.uk/search?q={keywords_str}&page={page}"
+                r = requests.get(url=url, headers=get_header())
+
+                html_content = r.text
+                soup = BeautifulSoup(html_content, "html.parser")
+                match = re.search(">window.__INITIAL_DATA__=(.+);</script>", str(soup.find_all("script")[3]))
+                if match:
+                    data = json.loads(match[1])
+                    initial_results = jsonpath.jsonpath(data, "$..initialResults")[0]
+                    for item in initial_results["items"]:
+                        # 17 April 2017
+                        # 8 hours ago
+                        origin_date = utils.format_date(item["metadataStripItems"][0]["text"])
+
+                        if origin_date != -1 and int(start_time) <= int(origin_date) <= int(end_time):
+                            article = entity.Article()
+                            article.title = item["headline"]
+
+                            article.title_cn = utils.translate(article.title)
+                            article.url = item["url"]
+                            article.date = str(origin_date)
+                            try:
+                                time.sleep(1)
+                                title, publish_date, content = utils.get_title_time_content(item["url"],
+                                                                                            header=get_header())
+                                article.text = content
+                                article.text_cn = utils.translate(article.text)
+                            except Exception as exc:
+                                continue
+
+                            item_set.add(article)
+            except Exception as exc:
+                continue
+            finally:
+                try:
+                    global TOTALS
+                    TOTALS += len(item_set)
+                    utils.write_xlsx_apend(file_path, item_set)
+                    item_set.clear()
+                except:
+                    pass
+
+
+class Task(threading.Thread):
+    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time, signal):
+        super().__init__()
+        self.thread_id = thread_id
+        self.name = name
+        self.dir_name = dir_name
+        self.keywords = keywords
+        self.start_time = start_time
+        self.end_time = end_time
+        self._signal = signal
+
+    def run(self):
+        try:
+            self._signal.emit(f"{self.name} start...")
+            start = time.time()
+            file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
+            # 创建空Excel并写入表头
+            utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+            start_crawl(file_path, self.keywords, self.start_time, self.end_time)
+            end = time.time()
+            used_time = round((end - start) / 60, 2)
+            msg = f"{self.name} end, totals:{TOTALS}, used:{used_time} min"
+            self._signal.emit(msg)
+        except:
+            self._signal.emit(f"{self.name} failed end")
+
+
+if __name__ == '__main__':
+    keywords = ["China", "Threat"]
+    start_time = "20210525"
+    end_time = "20210530"
+    # 创建空Excel并写入表头
+    utils.create_xlsx_with_head("./BBC.xlsx", sheet_name='+'.join(keywords))
+    start_crawl("./BBC.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)

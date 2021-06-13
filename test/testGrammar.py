@@ -25,6 +25,26 @@
 # for item in text:
 #     print(item[0])
 
-import os,sys
-
-print(sys.path)
+# import datetime, re
+#
+# now = datetime.datetime.now()
+# print(now.strftime("%Y%m%d"))
+#
+# str1 = "14 hours ago"
+# str2 = "30 minutes ago"
+# hours_match = re.match(r"(\d+)\s+hours.+ago", str1)
+# minutes_match = re.match(r"(\d+)\s+minutes.+ago", str2)
+# if hours_match:
+#     print(int(hours_match.group(1)))
+#     n_hours_before = now - datetime.timedelta(hours=int(hours_match.group(1)))
+#     print(n_hours_before.strftime("%Y%m%d"))
+# if minutes_match:
+#     print(int(minutes_match.group(1)))
+#     n_minutes_before = now - datetime.timedelta(minutes=int(minutes_match.group(1)))
+#     print(n_minutes_before.strftime("%Y%m%d"))
+str3 = "{'a':'a','b':2}"
+name = "nnnnn"
+str4 = f"{'name':{name}}"
+print(str4)
+# d = dict(eval(str3))
+# print(type(d.get("b")))
