@@ -1,5 +1,6 @@
 import requests
 import re
+
 from bs4 import BeautifulSoup
 import newspaper as ns
 import time
@@ -62,23 +63,19 @@ def start_crawl(file_path, keywords, start_time, end_time):
                         # 8 hours ago
                         origin_date = utils.format_date(item["metadataStripItems"][0]["text"])
 
-                        if origin_date != -1 and int(start_time) <= origin_date <= int(end_time):
+                        if origin_date != -1 and int(start_time) <= int(origin_date) <= int(end_time):
                             article = entity.Article()
                             article.title = item["headline"]
-                            article.title_cn = utils.translate_with_webdriver(article.title)
+
+                            article.title_cn = utils.translate(article.title)
                             article.url = item["url"]
                             article.date = str(origin_date)
                             try:
                                 time.sleep(1)
-                                art = ns.Article(item["url"], headers=get_header())
-                                art.download()
-                                art.parse()
-                                article.text = art.text
-                                if art.text.strip() == "":
-                                    title, publish_date, content = utils.get_title_time_content(item["url"],
-                                                                                                header=get_header())
-                                    article.text = content
-                                article.text_cn = utils.translate_with_webdriver(article.text)
+                                title, publish_date, content = utils.get_title_time_content(item["url"],
+                                                                                            header=get_header())
+                                article.text = content
+                                article.text_cn = utils.translate(article.text)
                             except Exception as exc:
                                 continue
 
@@ -96,30 +93,36 @@ def start_crawl(file_path, keywords, start_time, end_time):
 
 
 class Task(threading.Thread):
-    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time):
-        threading.Thread.__init__(self)
+    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time, signal):
+        super().__init__()
         self.thread_id = thread_id
         self.name = name
         self.dir_name = dir_name
         self.keywords = keywords
         self.start_time = start_time
         self.end_time = end_time
+        self._signal = signal
 
     def run(self):
-        print(f"{self.name} start...")
-        start = time.time()
-        file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
-        # 创建空Excel并写入表头
-        utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
-        start_crawl(file_path, self.keywords, self.start_time, self.end_time)
-        end = time.time()
-        print(f"{self.name} end, totals:{TOTALS}, used:{round((end - start) / 60, 2)} min")
+        try:
+            self._signal.emit(f"{self.name} start...")
+            start = time.time()
+            file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
+            # 创建空Excel并写入表头
+            utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+            start_crawl(file_path, self.keywords, self.start_time, self.end_time)
+            end = time.time()
+            used_time = round((end - start) / 60, 2)
+            msg = f"{self.name} end, totals:{TOTALS}, used:{used_time} min"
+            self._signal.emit(msg)
+        except:
+            self._signal.emit(f"{self.name} failed end")
 
 
 if __name__ == '__main__':
     keywords = ["China", "Threat"]
-    start_time = "20210601"
-    end_time = "20210603"
+    start_time = "20210525"
+    end_time = "20210530"
     # 创建空Excel并写入表头
     utils.create_xlsx_with_head("./BBC.xlsx", sheet_name='+'.join(keywords))
     start_crawl("./BBC.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)

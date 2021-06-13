@@ -4,6 +4,7 @@ import os
 
 from PySide2 import QtCore, QtWidgets
 from PySide2.QtWidgets import QMainWindow
+from PySide2.QtCore import QThread, Signal
 
 import utils
 
@@ -18,62 +19,61 @@ from spiders import politico_spider
 from spiders import thehill_spider
 
 
-class Window(QMainWindow, MainWindow.Ui_MainWindow):
-    def __init__(self):
-        super(Window, self).__init__()
-        self.setupUi(self)
+# 继承QThread
+class Runthread(QThread):
+    #  通过类成员对象定义信号对象
+    _signal = Signal(str)
 
-        # 增加槽链接
-        self.pushButton.clicked.connect(self.start_crawl)
+    def __init__(self, target_sites, keywords, start_date, end_date):
+        super(Runthread, self).__init__()
+        self.target_sites = target_sites
+        self.keywords = keywords
+        self.start_date = start_date
+        self.end_date = end_date
 
-    def start_crawl(self):
-        # 获取当前输入
-        start_date = self.start_date.text().replace("/", "")
-        end_date = self.end_date.text().replace("/", "")
-        keywords = re.split(r"\s+", self.lineEdit.text().strip())
-        target_sites = []
-        if self.checkBox_wsj.isChecked(): target_sites.append("WSJ")
-        if self.checkBox_cnn.isChecked(): target_sites.append("CNN")
-        if self.checkBox_bbc.isChecked(): target_sites.append("BBC")
-        if self.checkBox_foxnews.isChecked(): target_sites.append("FoxNews")
-        if self.checkBox_olympics_tokyo.isChecked(): target_sites.append("Olympics_Tokyo")
-        if self.checkBox_olympics_world.isChecked(): target_sites.append("Olympics_World")
-        if self.checkBox_politico.isChecked(): target_sites.append("Politico")
-        if self.checkBox_thehill.isChecked(): target_sites.append("TheHill")
-
-        # 无效参数
-        if len(keywords) == 0 or int(start_date) > int(end_date) or len(target_sites) <= 0:
-            self.label_info.setText("input invalid, please check the parameters!")
-            return
-
+    def run(self):
         # 创建关键词目录
-        result_dir = os.path.join(utils.project_dir(), f"spiderResult\\{'+'.join(keywords)}")
+        result_dir = os.path.join(utils.project_dir(), f"spiderResult\\{'+'.join(self.keywords)}")
         if not os.path.isdir(result_dir):
             os.makedirs(result_dir)
+        self._signal.emit(f"resultPath:{result_dir}")
         # 开始爬取
-        print("spiders are running, please wait...")
         # 批量启动并阻塞线程
         try:
             threading_pool = []
-            for id, site in enumerate(target_sites, start=1):
+            for id, site in enumerate(self.target_sites, start=1):
                 if site == "WSJ":
-                    threading_pool.append(wsj_spider.Task(id, site, result_dir, keywords, start_date, end_date))
+                    threading_pool.append(
+                        wsj_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
+                                        self._signal))
                 if site == "CNN":
-                    threading_pool.append(cnn_spider.Task(id, site, result_dir, keywords, start_date, end_date))
+                    threading_pool.append(
+                        cnn_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
+                                        self._signal))
                 if site == "BBC":
-                    threading_pool.append(bbc_spider.Task(id, site, result_dir, keywords, start_date, end_date))
+                    threading_pool.append(
+                        bbc_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
+                                        self._signal))
                 if site == "FoxNews":
-                    threading_pool.append(foxnews_spider.Task(id, site, result_dir, keywords, start_date, end_date))
+                    threading_pool.append(
+                        foxnews_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
+                                            self._signal))
                 if site == "Olympics_Tokyo":
                     threading_pool.append(
-                        olympics_tokyo_spider.Task(id, site, result_dir, keywords, start_date, end_date))
+                        olympics_tokyo_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
+                                                   self._signal))
                 if site == "Olympics_World":
                     threading_pool.append(
-                        olympics_world_spider.Task(id, site, result_dir, keywords, start_date, end_date))
+                        olympics_world_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
+                                                   self._signal))
                 if site == "Politico":
-                    threading_pool.append(politico_spider.Task(id, site, result_dir, keywords, start_date, end_date))
+                    threading_pool.append(
+                        politico_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
+                                             self._signal))
                 if site == "TheHill":
-                    threading_pool.append(thehill_spider.Task(id, site, result_dir, keywords, start_date, end_date))
+                    threading_pool.append(
+                        thehill_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
+                                            self._signal))
 
             for th in threading_pool:
                 th.start()
@@ -81,6 +81,64 @@ class Window(QMainWindow, MainWindow.Ui_MainWindow):
                 th.join()
         except:
             pass
+
+
+class Window(QMainWindow, MainWindow.Ui_MainWindow):
+    def __init__(self):
+        super(Window, self).__init__()
+        self.setupUi(self)
+
+        self.start_date_content = ""
+        self.end_date_content = ""
+        self.keywords = ""
+        self.target_sites = []
+        self.thread = None
+
+        self.count_down = 0
+        # 增加槽链接
+        self.pushButton.clicked.connect(self.start_crawl)
+
+    def start_spiders(self):
+        # 防止多次启动任务
+        self.pushButton.setDisabled(True)
+        # 创建线程
+        self.thread = Runthread(self.target_sites, self.keywords, self.start_date_content, self.end_date_content)
+        # 连接信号
+        self.thread.Daemon = True
+        self.thread._signal.connect(self.call_backlog)  # 进程连接回传到GUI的事件
+        # 开始线程
+        self.thread.start()
+
+    def log(self, msg):
+        self.textBrowser.append(f"{utils.now_timestamp(mode='human')} {msg}")
+
+    def call_backlog(self, msg):
+        if msg.__contains__("end"):
+            self.count_down += 1
+        self.log(msg)
+        if self.count_down == len(self.target_sites):
+            self.pushButton.setEnabled(True)
+
+    def start_crawl(self):
+        # 获取当前输入
+        self.start_date_content = self.start_date.text().replace("/", "")
+        self.end_date_content = self.end_date.text().replace("/", "")
+        self.keywords = re.split(r"\s+", self.lineEdit.text().strip())
+        if self.checkBox_wsj.isChecked(): self.target_sites.append("WSJ")
+        if self.checkBox_cnn.isChecked(): self.target_sites.append("CNN")
+        if self.checkBox_bbc.isChecked(): self.target_sites.append("BBC")
+        if self.checkBox_foxnews.isChecked(): self.target_sites.append("FoxNews")
+        if self.checkBox_olympics_tokyo.isChecked(): self.target_sites.append("Olympics_Tokyo")
+        if self.checkBox_olympics_world.isChecked(): self.target_sites.append("Olympics_World")
+        if self.checkBox_politico.isChecked(): self.target_sites.append("Politico")
+        if self.checkBox_thehill.isChecked(): self.target_sites.append("TheHill")
+
+        # 无效参数
+        if len(self.keywords) == 0 or int(self.start_date_content) > int(self.end_date_content) or len(
+                self.target_sites) <= 0:
+            self.log("input invalid, please check the parameters!")
+            return
+        self.start_spiders()
 
 
 if __name__ == '__main__':

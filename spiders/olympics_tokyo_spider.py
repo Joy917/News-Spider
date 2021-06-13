@@ -1,4 +1,5 @@
 import threading
+
 from bs4 import BeautifulSoup
 import re
 import newspaper as ns
@@ -45,6 +46,8 @@ def start_crawl(file_path, keywords, start_time, end_time):
         div = driver.find_element_by_xpath(
             "//body/main[@id='tk-main-content']/section[1]/div[1]/div[2]/div[2]/div[1]/div[1]/ul[1]")
         soup = BeautifulSoup(div.get_attribute('innerHTML'), "html.parser")
+    except Exception as exc:
+        pass
     finally:
         driver.quit()
 
@@ -57,27 +60,21 @@ def start_crawl(file_path, keywords, start_time, end_time):
             article.url = a.get("href")
             h3 = li.find_next("h3", class_="tk-card__title")
             article.title = h3.get("title")
-            article.title_cn = utils.translate_with_webdriver(article.title)
+            article.title_cn = utils.translate(article.title)
             origin_date = li.find_next("time", class_="tk-card__pubdate").get("datetime")
             # 解析正文
             try:
                 article.date = origin_date[0:11].replace("-", "")
                 if int(start_time) <= int(article.date) <= int(end_time):
-                    art = ns.Article(article.url, headers=get_header(), language='en')
-                    art.download()
-                    art.parse()
-                    article.text = art.text
-                    if art.text.strip() == "":
-                        title, publish_date, content = utils.get_title_time_content(article.url, header=get_header())
-                        article.text = content
-                    article.text_cn = utils.translate_with_webdriver(article.text)
+                    title, publish_date, content = utils.get_title_time_content(article.url, header=get_header())
+                    article.text = content
+                    article.text_cn = utils.translate(article.text)
                 else:
                     continue
             except Exception as exc:
                 pass
             time.sleep(1)
             item_set.add(article)
-
     try:
         global TOTALS
         TOTALS += len(item_set)
@@ -88,25 +85,30 @@ def start_crawl(file_path, keywords, start_time, end_time):
 
 
 class Task(threading.Thread):
-    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time):
-        threading.Thread.__init__(self)
+    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time, signal):
+        super().__init__()
         self.thread_id = thread_id
         self.name = name
         self.dir_name = dir_name
         self.keywords = keywords
         self.start_time = start_time
         self.end_time = end_time
+        self._signal = signal
 
     def run(self):
-        print(f"{self.name} start...")
-        start = time.time()
-        file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
-        # 创建空Excel并写入表头
-        utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
-        start_crawl(file_path, self.keywords, self.start_time, self.end_time)
-        end = time.time()
-        print(f"{self.name} end, totals:{TOTALS}, used:{round((end - start) / 60, 2)} min")
-
+        try:
+            self._signal.emit(f"{self.name} start...")
+            start = time.time()
+            file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
+            # 创建空Excel并写入表头
+            utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+            start_crawl(file_path, self.keywords, self.start_time, self.end_time)
+            end = time.time()
+            used_time = round((end - start) / 60, 2)
+            msg = f"{self.name} end, totals:{TOTALS}, used:{used_time} min"
+            self._signal.emit(msg)
+        except:
+            self._signal.emit(f"{self.name} failed end")
 
 if __name__ == '__main__':
     keywords = ["China", "Threat"]

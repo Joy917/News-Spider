@@ -1,7 +1,7 @@
 import threading
+
 from bs4 import BeautifulSoup
 import re
-import newspaper as ns
 import time
 from selenium import webdriver
 
@@ -26,20 +26,27 @@ def get_header():
 
 
 def get_driver_with_login():
-    # 模拟浏览器登录
-    options = webdriver.ChromeOptions()
-    # 关闭可视化
-    options.add_argument('--headless')
-    # 关闭图片视频加载
-    options.add_argument('blink-settings=imagesEnabled=false')
-    driver = webdriver.Chrome(utils.DRIVER_PATH, options=options)
-    login_url = "https://accounts.wsj.com/login?target=https%3A%2F%2Fwww.wsj.com%2F"
-    driver.get(login_url)
-    driver.find_element_by_id("username").send_keys("peacebirdth@gmail.com")
-    driver.find_element_by_id("password").send_keys("12345678abc")
-    driver.find_element_by_xpath("//button[@type='submit']").click()
-    time.sleep(5)
-    driver.find_element_by_class_name("solid-button.reg-rtl-btn").click()
+    driver = None
+    for i in range(3):
+        try:
+            # 模拟浏览器登录
+            options = webdriver.ChromeOptions()
+            # 关闭可视化
+            options.add_argument('--headless')
+            # 关闭图片视频加载
+            options.add_argument('blink-settings=imagesEnabled=false')
+            driver = webdriver.Chrome(utils.DRIVER_PATH, options=options)
+            login_url = "https://accounts.wsj.com/login?target=https%3A%2F%2Fwww.wsj.com%2F"
+            driver.get(login_url)
+            driver.find_element_by_id("username").send_keys("peacebirdth@gmail.com")
+            driver.find_element_by_id("password").send_keys("12345678abc")
+            driver.find_element_by_xpath("//button[@type='submit']").click()
+            time.sleep(7)
+            driver.find_element_by_class_name("solid-button.reg-rtl-btn").click()
+            if driver:
+                break
+        except:
+            continue
     return driver
 
 
@@ -90,8 +97,8 @@ def start_crawl(file_path, keywords, start_time, end_time):
 
             item.title = title
             item.text = content
-            item.title_cn = utils.translate_with_webdriver(item.title)
-            item.text_cn = utils.translate_with_webdriver(item.text)
+            item.title_cn = utils.translate(item.title)
+            item.text_cn = utils.translate(item.text)
         except Exception as exc:
             pass
         try:
@@ -105,30 +112,36 @@ def start_crawl(file_path, keywords, start_time, end_time):
 
 
 class Task(threading.Thread):
-    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time):
-        threading.Thread.__init__(self)
+    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time, signal):
+        super().__init__()
         self.thread_id = thread_id
         self.name = name
         self.dir_name = dir_name
         self.keywords = keywords
         self.start_time = start_time
         self.end_time = end_time
+        self._signal = signal
 
     def run(self):
-        print(f"{self.name} start...")
-        start = time.time()
-        file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
-        # 创建空Excel并写入表头
-        utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
-        start_crawl(file_path, self.keywords, self.start_time, self.end_time)
-        end = time.time()
-        print(f"{self.name} end, totals:{TOTALS}, used:{round((end - start) / 60, 2)} min")
+        try:
+            self._signal.emit(f"{self.name} start...")
+            start = time.time()
+            file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
+            # 创建空Excel并写入表头
+            utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+            start_crawl(file_path, self.keywords, self.start_time, self.end_time)
+            end = time.time()
+            used_time = round((end - start) / 60, 2)
+            msg = f"{self.name} end, totals:{TOTALS}, used:{used_time} min"
+            self._signal.emit(msg)
+        except:
+            self._signal.emit(f"{self.name} failed end")
 
 
 if __name__ == '__main__':
-    keywords = ["China", "Threat"]
-    start_time = "20210525"
-    end_time = "20210530"
+    keywords = ["G7"]
+    start_time = "20210610"
+    end_time = "20210613"
     # 创建空Excel并写入表头
     utils.create_xlsx_with_head("./WSJ.xlsx", sheet_name='+'.join(keywords))
     start_crawl("./WSJ.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)

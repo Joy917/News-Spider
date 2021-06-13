@@ -3,6 +3,7 @@ import json
 import time
 import threading
 
+
 import utils
 import entity
 
@@ -47,11 +48,11 @@ def start_crawl(file_path, keywords, start_time, end_time):
                     article = entity.Article()
                     article.url = result["url"]
                     article.title = result["headline"]
-                    article.title_cn = utils.translate_with_webdriver(article.title)
+                    article.title_cn = utils.translate(article.title)
                     article.date = date
                     article.text = result["body"]
                     time.sleep(1)
-                    article.text_cn = utils.translate_with_webdriver(article.text)
+                    article.text_cn = utils.translate(article.text)
                     item_set.add(article)
                 # 时间逆序，小于开始时间则后续文章都不满足时间要求
                 if date < int(start_time):
@@ -66,25 +67,30 @@ def start_crawl(file_path, keywords, start_time, end_time):
 
 
 class Task(threading.Thread):
-    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time):
-        threading.Thread.__init__(self)
+    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time, signal):
+        super().__init__()
         self.thread_id = thread_id
         self.name = name
         self.dir_name = dir_name
         self.keywords = keywords
         self.start_time = start_time
         self.end_time = end_time
+        self._signal = signal
 
     def run(self):
-        print(f"{self.name} start...")
-        start = time.time()
-        file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
-        # 创建空Excel并写入表头
-        utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
-        start_crawl(file_path, self.keywords, self.start_time, self.end_time)
-        end = time.time()
-        print(f"{self.name} end, totals:{TOTALS}, used:{round((end - start) / 60, 2)} min")
-
+        try:
+            self._signal.emit(f"{self.name} start...")
+            start = time.time()
+            file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
+            # 创建空Excel并写入表头
+            utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+            start_crawl(file_path, self.keywords, self.start_time, self.end_time)
+            end = time.time()
+            used_time = round((end - start) / 60, 2)
+            msg = f"{self.name} end, totals:{TOTALS}, used:{used_time} min"
+            self._signal.emit(msg)
+        except:
+            self._signal.emit(f"{self.name} failed end")
 
 if __name__ == '__main__':
     keywords = ["China", "Threat"]

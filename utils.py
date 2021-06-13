@@ -13,17 +13,33 @@ from selenium import webdriver
 
 def format_date(input_date):
     """ date examples:
+    8 hours ago
+    30 minutes ago
+    3 days ago
     17 April 2017
     17 April = 17 April {currentYear}
-    8 hours ago
+    7 April = 07 April {currentYear}
     # April 9, 2021 04:06 pm ET
     :param input_date: string
-    :return: int
+    :return: int 20170417
     """
     result = -1
     try:
-        if input_date.__contains__("hours ago"):
-            return datetime.date.today().strftime("%Y%m%d")
+        now = datetime.datetime.now()
+        # 非常规日期校验
+        days_match = re.match(r"(\d+)\s+day.+ago", input_date)
+        if days_match:
+            n_days_before = now - datetime.timedelta(days=int(days_match.group(1)))
+            return n_days_before.strftime("%Y%m%d")
+        hours_match = re.match(r"(\d+)\s+hours.+ago", input_date)
+        if hours_match:
+            n_hours_before = now - datetime.timedelta(hours=int(hours_match.group(1)))
+            return n_hours_before.strftime("%Y%m%d")
+        minutes_match = re.match(r"(\d+)\s+minutes.+ago", input_date)
+        if minutes_match:
+            n_minutes_before = now - datetime.timedelta(minutes=int(minutes_match.group(1)))
+            return n_minutes_before.strftime("%Y%m%d")
+
         date_slice = re.split(r"\s+", input_date.strip())
         day = date_slice[0]
         if len(day) == 1: day = "0" + day
@@ -32,16 +48,19 @@ def format_date(input_date):
         if not month: month = "01"
         year = "2021"
         if len(date_slice) == 2:
-            year = datetime.date.today().strftime("%Y")
+            year = now.strftime("%Y")
         elif len(date_slice) == 3:
             year = date_slice[2]
         result = int(f"{year}{month}{day}")
-    finally:
+    except Exception as exc:
         return result
 
 
-def now_timestamp():
-    return datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+def now_timestamp(mode="timestamp"):
+    result = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    if mode == "human":
+        result = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S ")
+    return result
 
 
 def project_dir():
@@ -49,7 +68,7 @@ def project_dir():
     return os.path.abspath(os.path.dirname(__file__))
 
 
-def translate(text, target_language="zh-CN"):
+def translate_with_api(text, target_language="zh-CN"):
     """
     请求谷歌翻译接口，次数过多会被限制访问，大概在20次左右
     :param text:
@@ -79,7 +98,29 @@ def translate(text, target_language="zh-CN"):
     return result
 
 
-def translate_with_webdriver(text, target_language="zh-CN"):
+def get_webdriver():
+    # 模拟浏览器登录
+    options = webdriver.ChromeOptions()
+    # 关闭可视化
+    options.add_argument('--headless')
+    # 关闭图片视频加载
+    options.add_argument('blink-settings=imagesEnabled=false')
+    driver = webdriver.Chrome(DRIVER_PATH, options=options)
+    return driver
+
+
+def translate(text, target_language="zh-CN"):
+    driver = get_webdriver()
+    result = ""
+    for i in range(3):
+        result = translate_with_webdriver(text, driver, target_language=target_language)
+        if result.strip() != "":
+            break
+    driver.quit()
+    return result
+
+
+def translate_with_webdriver(text, driver, target_language="zh-CN"):
     result = ""
     if text and isinstance(text, str) and text.strip() != "":
         # 超过5000字符需要多次翻译
@@ -88,23 +129,15 @@ def translate_with_webdriver(text, target_language="zh-CN"):
             temp_result = ""
             for i in range(0, count):
                 temp_text = text[5000 * i:5000 * (i + 1)]
-                temp_result += translate_with_webdriver(temp_text, target_language)
+                temp_result += translate_with_webdriver(temp_text, driver, target_language)
             return temp_result
         url = f"https://translate.google.cn/?"
         params = {"sl": "auto", "tl": target_language, "op": "translate", "text": text}
         try:
-            # 模拟浏览器登录
-            options = webdriver.ChromeOptions()
-            # 关闭可视化
-            options.add_argument('--headless')
-            # 关闭图片视频加载
-            options.add_argument('blink-settings=imagesEnabled=false')
-            driver = webdriver.Chrome(DRIVER_PATH, options=options)
             driver.get(url + urlencode(params))
             element = driver.find_element_by_xpath(
                 "//div[1]/div[2]/c-wiz[1]/div[2]/c-wiz[1]/div[1]/div[2]/div[2]/c-wiz[2]/div[5]/div[1]/div[1]/span[1]/span[1]")
             soup = BeautifulSoup(element.get_attribute('innerHTML'), "html.parser")
-            driver.quit()
             result = soup.find_all("span")[0].string
         except Exception as exc:
             pass
@@ -278,3 +311,4 @@ if __name__ == '__main__':
     # print(content)
     # print(translate_with_webdriver(content))
     print(project_dir())
+    print(now_timestamp(mode="human"))

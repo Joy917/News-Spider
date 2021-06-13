@@ -1,4 +1,6 @@
 import threading
+
+from PySide2.QtCore import QThread
 from bs4 import BeautifulSoup
 import re
 import newspaper as ns
@@ -9,6 +11,7 @@ import utils
 import entity
 
 TOTALS = 0
+
 
 def get_header():
     header = {
@@ -24,18 +27,6 @@ def get_header():
     return header
 
 
-def get_driver_with_login():
-    # 模拟浏览器登录
-    options = webdriver.ChromeOptions()
-    # 关闭可视化
-    options.add_argument('--headless')
-    # 关闭图片视频加载
-    options.add_argument('blink-settings=imagesEnabled=false')
-    driver = webdriver.Chrome(utils.DRIVER_PATH, options=options)
-
-    return driver
-
-
 def driver_url(driver, url):
     driver.get(url)
 
@@ -48,7 +39,7 @@ def driver_url(driver, url):
 def start_crawl(file_path, keywords, start_time, end_time):
     keywords_str = "%20".join(keywords)
 
-    driver = get_driver_with_login()
+    driver = utils.get_webdriver()
     item_set = set()
     for page in range(0, 10):
         url = f"https://thehill.com/search/query/{keywords_str}?page={page}"
@@ -74,18 +65,13 @@ def start_crawl(file_path, keywords, start_time, end_time):
                         href = "https://thehill.com" + href
                     article.url = href
                     article.title = a.string
-                    article.title_cn = utils.translate_with_webdriver(article.title)
+                    article.title_cn = utils.translate(article.title)
                     article.date = date
                     # 解析正文
                     try:
-                        art = ns.Article(href, headers=get_header(), language='en')
-                        art.download()
-                        art.parse()
-                        article.text = art.text
-                        if art.text.strip() == "":
-                            title, publish_date, content = utils.get_title_time_content(href, header=get_header())
-                            article.text = content
-                        article.text_cn = utils.translate_with_webdriver(article.text)
+                        title, publish_date, content = utils.get_title_time_content(href, header=get_header())
+                        article.text = content
+                        article.text_cn = utils.translate(article.text)
                     except Exception as exc:
                         pass
                     time.sleep(1)
@@ -102,6 +88,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
             item_set.clear()
         except:
             pass
+    driver.quit()
 
 
 def save_to_excel(file_path, keywords, item_set):
@@ -110,25 +97,30 @@ def save_to_excel(file_path, keywords, item_set):
 
 
 class Task(threading.Thread):
-    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time):
-        threading.Thread.__init__(self)
+    def __init__(self, thread_id, name, dir_name, keywords, start_time, end_time, signal):
+        super().__init__()
         self.thread_id = thread_id
         self.name = name
         self.dir_name = dir_name
         self.keywords = keywords
         self.start_time = start_time
         self.end_time = end_time
+        self._signal = signal
 
     def run(self):
-        print(f"{self.name} start...")
-        start = time.time()
-        file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
-        # 创建空Excel并写入表头
-        utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
-        start_crawl(file_path, self.keywords, self.start_time, self.end_time)
-        end = time.time()
-        print(f"{self.name} end, totals:{TOTALS}, used:{round((end - start) / 60, 2)} min")
-
+        try:
+            self._signal.emit(f"{self.name} start...")
+            start = time.time()
+            file_path = f"{self.dir_name}\\{utils.now_timestamp()}-{self.name}.xlsx"
+            # 创建空Excel并写入表头
+            utils.create_xlsx_with_head(file_path=file_path, sheet_name='+'.join(self.keywords))
+            start_crawl(file_path, self.keywords, self.start_time, self.end_time)
+            end = time.time()
+            used_time = round((end - start) / 60, 2)
+            msg = f"{self.name} end, totals:{TOTALS}, used:{used_time} min"
+            self._signal.emit(msg)
+        except:
+            self._signal.emit(f"{self.name} failed end")
 
 if __name__ == '__main__':
     keywords = ["China", "Threat"]
