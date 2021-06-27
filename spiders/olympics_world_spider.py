@@ -60,7 +60,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
                 href = "https://olympics.com" + href
             article.url = href
             article.title = a.string
-            article.title_cn = utils.translate(article.title)
+
             # 解析正文和时间
             try:
                 art = ns.Article(href, headers=get_header(), language='en')
@@ -75,11 +75,12 @@ def start_crawl(file_path, keywords, start_time, end_time):
                         article.text = content
                     article.text_cn = utils.translate(article.text)
                     article.date = date
+                    time.sleep(1)
+                    article.title_cn = utils.translate(article.title)
                 else:
                     continue
             except Exception as exc:
                 pass
-            time.sleep(1)
             item_set.add(article)
     try:
         global TOTALS
@@ -113,8 +114,9 @@ class Task(threading.Thread):
             used_time = round((end - start) / 60, 2)
             msg = f"{self.name} end, totals:{TOTALS}, used:{used_time} min"
             self._signal.emit(msg)
-        except:
+        except Exception as exc:
             self._signal.emit(f"{self.name} failed end")
+
 
 if __name__ == '__main__':
     keywords = ["Iran"]

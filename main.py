@@ -35,6 +35,7 @@ class Runthread(QThread):
         # 创建关键词目录
         result_dir = os.path.join(utils.project_dir(), f"spiderResult\\{'+'.join(self.keywords)}")
         if not os.path.isdir(result_dir):
+            self.target_sites.clear()
             os.makedirs(result_dir)
         self._signal.emit(f"resultPath:{result_dir}")
         # 开始爬取
@@ -90,7 +91,7 @@ class Window(QMainWindow, MainWindow.Ui_MainWindow):
 
         self.start_date_content = ""
         self.end_date_content = ""
-        self.keywords = ""
+        self.keywords = []
         self.target_sites = []
         self.thread = None
 
@@ -99,12 +100,13 @@ class Window(QMainWindow, MainWindow.Ui_MainWindow):
         self.pushButton.clicked.connect(self.start_crawl)
 
     def start_spiders(self):
+        self.count_down = 0
         # 防止多次启动任务
         self.pushButton.setDisabled(True)
         # 创建线程
         self.thread = Runthread(self.target_sites, self.keywords, self.start_date_content, self.end_date_content)
         # 连接信号
-        self.thread.Daemon = True
+        # self.thread.Daemon = True
         self.thread._signal.connect(self.call_backlog)  # 进程连接回传到GUI的事件
         # 开始线程
         self.thread.start()
@@ -120,10 +122,12 @@ class Window(QMainWindow, MainWindow.Ui_MainWindow):
             self.pushButton.setEnabled(True)
 
     def start_crawl(self):
+        self.target_sites.clear()
         # 获取当前输入
         self.start_date_content = self.start_date.text().replace("/", "")
         self.end_date_content = self.end_date.text().replace("/", "")
-        self.keywords = re.split(r"\s+", self.lineEdit.text().strip())
+        line_edit = self.lineEdit.text().strip()
+        if line_edit != "": self.keywords = re.split(r"\s+", line_edit)
         if self.checkBox_wsj.isChecked(): self.target_sites.append("WSJ")
         if self.checkBox_cnn.isChecked(): self.target_sites.append("CNN")
         if self.checkBox_bbc.isChecked(): self.target_sites.append("BBC")

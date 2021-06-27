@@ -27,7 +27,7 @@ def get_header():
 
 def get_driver_with_login():
     driver = None
-    for i in range(3):
+    for i in range(2):
         try:
             # 模拟浏览器登录
             options = webdriver.ChromeOptions()

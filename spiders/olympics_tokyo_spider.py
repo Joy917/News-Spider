@@ -59,7 +59,6 @@ def start_crawl(file_path, keywords, start_time, end_time):
             article.url = a.get("href")
             h3 = li.find_next("h3", class_="tk-card__title")
             article.title = h3.get("title")
-            article.title_cn = utils.translate(article.title)
             origin_date = li.find_next("time", class_="tk-card__pubdate").get("datetime")
             # 解析正文
             try:
@@ -68,11 +67,13 @@ def start_crawl(file_path, keywords, start_time, end_time):
                     title, publish_date, content = utils.get_title_time_content(article.url, header=get_header())
                     article.text = content
                     article.text_cn = utils.translate(article.text)
+                    time.sleep(1)
+                    article.title_cn = utils.translate(article.title)
                 else:
                     continue
             except Exception as exc:
                 pass
-            time.sleep(1)
+
             item_set.add(article)
     try:
         global TOTALS
@@ -106,13 +107,13 @@ class Task(threading.Thread):
             used_time = round((end - start) / 60, 2)
             msg = f"{self.name} end, totals:{TOTALS}, used:{used_time} min"
             self._signal.emit(msg)
-        except:
+        except Exception as exc:
             self._signal.emit(f"{self.name} failed end")
 
 if __name__ == '__main__':
-    keywords = ["China", "Threat"]
-    start_time = "20210525"
-    end_time = "20210530"
+    keywords = ["Iran"]
+    start_time = "20210608"
+    end_time = "20210615"
     # 创建空Excel并写入表头
     utils.create_xlsx_with_head("./Tokyo.xlsx", sheet_name='+'.join(keywords))
     start_crawl("./Tokyo.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)

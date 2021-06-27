@@ -117,6 +117,8 @@ def translate(text, target_language="zh-CN"):
         if result.strip() != "":
             break
     driver.quit()
+    if result.strip() == "":
+        result = translate_with_api(text)
     return result
 
 

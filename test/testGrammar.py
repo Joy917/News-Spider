@@ -26,13 +26,13 @@
 #     print(item[0])
 
 import datetime, re
-
-now = datetime.datetime.now()
-print(now.strftime("%Y%m%d"))
-
-str1 = "June 11, 2021 04:43 pm ET"
-str2 = "30 minutes ago"
-print(datetime.datetime.strptime(str1, "%Y%m%d"))
+#
+# now = datetime.datetime.now()
+# print(now.strftime("%Y%m%d"))
+#
+# str1 = "June 11, 2021 04:43 pm ET"
+# str2 = "30 minutes ago"
+# print(datetime.datetime.strptime(str1, "%Y%m%d"))
 # hours_match = re.match(r"(\d+)\s+hours.+ago", str1)
 # # minutes_match = re.match(r"(\d+)\s+minutes.+ago", str2)
 # if hours_match:
@@ -49,3 +49,5 @@ print(datetime.datetime.strptime(str1, "%Y%m%d"))
 # print(str4)
 # d = dict(eval(str3))
 # print(type(d.get("b")))
+
+print(re.split(r"\s+", "a  b".strip()))
