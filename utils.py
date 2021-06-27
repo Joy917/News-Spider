@@ -52,7 +52,7 @@ def format_date(input_date):
         elif len(date_slice) == 3:
             year = date_slice[2]
         result = int(f"{year}{month}{day}")
-    finally:
+    except:
         return result
 
 
