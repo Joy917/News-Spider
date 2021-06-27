@@ -140,8 +140,8 @@ class Task(threading.Thread):
 
 if __name__ == '__main__':
     keywords = ["G7"]
-    start_time = "20210610"
-    end_time = "20210613"
+    start_time = "20210611"
+    end_time = "20210618"
     # 创建空Excel并写入表头
     utils.create_xlsx_with_head("./WSJ.xlsx", sheet_name='+'.join(keywords))
     start_crawl("./WSJ.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)

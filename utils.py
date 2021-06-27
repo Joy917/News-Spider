@@ -52,7 +52,7 @@ def format_date(input_date):
         elif len(date_slice) == 3:
             year = date_slice[2]
         result = int(f"{year}{month}{day}")
-    except Exception as exc:
+    finally:
         return result
 
 
@@ -112,7 +112,7 @@ def get_webdriver():
 def translate(text, target_language="zh-CN"):
     driver = get_webdriver()
     result = ""
-    for i in range(3):
+    for i in range(2):
         result = translate_with_webdriver(text, driver, target_language=target_language)
         if result.strip() != "":
             break
