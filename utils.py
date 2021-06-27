@@ -31,11 +31,11 @@ def format_date(input_date):
         if days_match:
             n_days_before = now - datetime.timedelta(days=int(days_match.group(1)))
             return n_days_before.strftime("%Y%m%d")
-        hours_match = re.match(r"(\d+)\s+hours.+ago", input_date)
+        hours_match = re.match(r"(\d+)\s+hour.+ago", input_date)
         if hours_match:
             n_hours_before = now - datetime.timedelta(hours=int(hours_match.group(1)))
             return n_hours_before.strftime("%Y%m%d")
-        minutes_match = re.match(r"(\d+)\s+minutes.+ago", input_date)
+        minutes_match = re.match(r"(\d+)\s+minute.+ago", input_date)
         if minutes_match:
             n_minutes_before = now - datetime.timedelta(minutes=int(minutes_match.group(1)))
             return n_minutes_before.strftime("%Y%m%d")

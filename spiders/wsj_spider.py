@@ -41,7 +41,7 @@ def get_driver_with_login():
             driver.find_element_by_id("username").send_keys("peacebirdth@gmail.com")
             driver.find_element_by_id("password").send_keys("12345678abc")
             driver.find_element_by_xpath("//button[@type='submit']").click()
-            time.sleep(7)
+            time.sleep(10)
             driver.find_element_by_class_name("solid-button.reg-rtl-btn").click()
             if driver:
                 break
