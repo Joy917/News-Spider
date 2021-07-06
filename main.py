@@ -89,6 +89,8 @@ class Window(QMainWindow, MainWindow.Ui_MainWindow):
         super(Window, self).__init__()
         self.setupUi(self)
 
+        os.putenv("PYTHONUNBUFFERED", "1")
+
         self.start_date_content = ""
         self.end_date_content = ""
         self.keywords = []
