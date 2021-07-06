@@ -1,7 +1,6 @@
 @echo off
 :: cd /d %~dp0
 set root=%~dp0
-echo %root%main.py
 :: 拷贝国内pip镜像源配置
 if not exist %appdata%\pip\pip.ini (
 mkdir %appdata%\pip
