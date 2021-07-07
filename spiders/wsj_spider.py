@@ -27,7 +27,7 @@ def get_header():
 
 def get_driver_with_login():
     driver = None
-    for i in range(2):
+    for i in range(3):
         try:
             # 模拟浏览器登录
             options = webdriver.ChromeOptions()
@@ -139,9 +139,9 @@ class Task(threading.Thread):
 
 
 if __name__ == '__main__':
-    keywords = ["Iran"]
-    start_time = "20210621"
-    end_time = "20210627"
+    keywords = ["Tokyo"]
+    start_time = "20210623"
+    end_time = "20210630"
     # 创建空Excel并写入表头
     utils.create_xlsx_with_head("./WSJ.xlsx", sheet_name='+'.join(keywords))
     start_crawl("./WSJ.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)

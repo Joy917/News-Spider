@@ -75,7 +75,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
                     item_set.add(article)
             else:
                 return item_set
-        except:
+        except Exception as exc:
             return item_set
 
         try:
@@ -120,9 +120,9 @@ class Task(threading.Thread):
             self._signal.emit(f"{self.name} failed end")
 
 if __name__ == '__main__':
-    keywords = ["China", "Threat"]
-    start_time = "20210525"
-    end_time = "20210530"
+    keywords = ["Tokyo"]
+    start_time = "20210623"
+    end_time = "20210630"
     # 创建空Excel并写入表头
     utils.create_xlsx_with_head("./TheHill.xlsx", sheet_name='+'.join(keywords))
     item_set = start_crawl("./TheHill.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)
