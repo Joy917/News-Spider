@@ -33,7 +33,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
     item_set = set()
 
     for start_index in range(1, total_results + 1, 10):
-        time.sleep(2)
+        time.sleep(1)
         url = f"https://api.foxnews.com/search/web?q={keywords}+-filetype:amp+-filetype:xml+more:pagemap:metatags-prism.section+more:pagemap:metatags-pagetype:article+more:pagemap:metatags-dc.type:Text.Article&siteSearch=foxnews.com&siteSearchFilter=i&sort=date:r:{start_time}:{end_time}&start={start_index}"
         try:
             r = requests.get(url=url, headers=get_header())
@@ -41,14 +41,13 @@ def start_crawl(file_path, keywords, start_time, end_time):
 
             # 每次查询总数会波动
             total_results = int(data["searchInformation"]["totalResults"])
-            if start_index > total_results:
+            if start_index > total_results or start_index > 100:
                 break
 
             for j in data["items"]:
                 item = j["pagemap"]["metatags"][0]
                 article = entity.Article()
                 article.title = item["dc.title"]
-                article.title_cn = utils.translate(article.title)
                 article.date = item["dc.date"]
                 article.url = item["og:url"]
                 item_set.add(article)
@@ -64,6 +63,7 @@ def start_crawl(file_path, keywords, start_time, end_time):
             title, publish_date, content = utils.get_title_time_content(item.url, header=get_header())
             item.text = content
             item.text_cn = utils.translate(item.text)
+            item.title_cn = utils.translate(item.title)
 
         except Exception as exc:
             continue
@@ -99,9 +99,9 @@ class Task(threading.Thread):
 
 
 if __name__ == '__main__':
-    keywords = ["China", "Threat"]
-    start_time = "20210525"
-    end_time = "20210530"
+    keywords = ["Tokyo"]
+    start_time = "20210713"
+    end_time = "20210714"
     # 创建空Excel并写入表头
     utils.create_xlsx_with_head("./FoxNews.xlsx", sheet_name='+'.join(keywords))
     start_crawl("./FoxNews.xlsx", keywords=keywords, start_time=start_time, end_time=end_time)
