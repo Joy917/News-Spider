@@ -10,3 +10,4 @@ copy %root%\config\pip.ini %appdata%\pip
 
 call pip install newspaper3k selenium bs4 jsonpath openpyxl requests PySide2 urllib3==1.25.8
 call python %root%\main.py
+pause
