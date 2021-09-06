@@ -287,12 +287,7 @@ if __name__ == '__main__':
     # value2 = [["Tom", "男", "21", "西安", "测试工程师"],
     #           ["Jones", "女", "34", "上海", "产品经理"],
     #           ["Cat", "女", "56", "上海", "教师"], ]
-    # print(format_date("17 Aprxil 2017"))
-    # write_excel_xls(book_name_xls, sheet_name_xls, value_title)
-    # write_excel_xls_append(book_name_xls, value1)
-    # write_excel_xls_append(book_name_xls, value2)
-    # read_excel_xls(book_name_xls)
-    # create_xlsx_with_head(r"D:\projects\Spider\demo.xlsx", "demosheet", value_title[0])
+    # create_xlsx_with_head(r"D:\projects\demo.xlsx", "demoSheet", value_title[0])
     # write_xlsx_apend(r"D:\projects\Spider\demo.xlsx", value1)
     text = ""
 

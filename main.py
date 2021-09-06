@@ -19,7 +19,7 @@ from spiders import politico_spider
 from spiders import thehill_spider
 
 
-# 继承QThread
+# 爬虫主线程，继承QThread
 class Runthread(QThread):
     #  通过类成员对象定义信号对象
     _signal = Signal(str)
@@ -32,7 +32,7 @@ class Runthread(QThread):
         self.end_date = end_date
 
     def run(self):
-        # 创建关键词目录
+        # 检查关键词目录，不存在则创建
         result_dir = os.path.join(utils.project_dir(), f"spiderResult\\{'+'.join(self.keywords)}")
         if not os.path.isdir(result_dir):
             self.target_sites.clear()
@@ -47,31 +47,31 @@ class Runthread(QThread):
                     threading_pool.append(
                         wsj_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
                                         self._signal))
-                if site == "CNN":
+                elif site == "CNN":
                     threading_pool.append(
                         cnn_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
                                         self._signal))
-                if site == "BBC":
+                elif site == "BBC":
                     threading_pool.append(
                         bbc_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
                                         self._signal))
-                if site == "FoxNews":
+                elif site == "FoxNews":
                     threading_pool.append(
                         foxnews_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
                                             self._signal))
-                if site == "Olympics_Tokyo":
+                elif site == "Olympics_Tokyo":
                     threading_pool.append(
                         olympics_tokyo_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
                                                    self._signal))
-                if site == "Olympics_World":
+                elif site == "Olympics_World":
                     threading_pool.append(
                         olympics_world_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
                                                    self._signal))
-                if site == "Politico":
+                elif site == "Politico":
                     threading_pool.append(
                         politico_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
                                              self._signal))
-                if site == "TheHill":
+                elif site == "TheHill":
                     threading_pool.append(
                         thehill_spider.Task(id, site, result_dir, self.keywords, self.start_date, self.end_date,
                                             self._signal))
@@ -83,7 +83,7 @@ class Runthread(QThread):
         except:
             pass
 
-
+# 界面主线程
 class Window(QMainWindow, MainWindow.Ui_MainWindow):
     def __init__(self):
         super(Window, self).__init__()
@@ -103,7 +103,7 @@ class Window(QMainWindow, MainWindow.Ui_MainWindow):
 
     def start_spiders(self):
         self.count_down = 0
-        # 防止多次启动任务
+        # 运行期间按钮失效，防止多次启动任务
         self.pushButton.setDisabled(True)
         # 创建线程
         self.thread = Runthread(self.target_sites, self.keywords, self.start_date_content, self.end_date_content)
