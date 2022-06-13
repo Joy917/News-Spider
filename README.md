@@ -28,7 +28,7 @@ win10 + python 3.9 + requests + newpaper + selenium + pyside2 + beautifulsoup4 +
 ![display.png](example/display.png)
 ![result.png](example/result.png)
 ---
-### 持续更新中，若有问题欢迎 Issue 反馈，如果觉得对你有帮助，请顺手点个 Star 鼓励下让更多人看到，感谢支持！
+### 持续更新中，若有问题欢迎 Issue 反馈，如果觉得对你有帮助，请顺手点个 Star 鼓励下，感谢支持！
 
 ---
 ## Q&A：
